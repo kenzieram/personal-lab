@@ -1,4 +1,4 @@
-import { FlatCompat } from "@eslint/eslintrc";
 import { defineConfig, globalIgnores } from "eslint/config";
-const compat = new FlatCompat({ baseDirectory: process.cwd() });
-export default defineConfig([...compat.extends("next/core-web-vitals", "next/typescript"), globalIgnores([".next/**","out/**","build/**","next-env.d.ts"])]);
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
+export default defineConfig([...nextVitals, ...nextTs, globalIgnores([".next/**","out/**","build/**","next-env.d.ts"])]);
