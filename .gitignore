@@ -1,0 +1,25 @@
+node_modules/
+.next/
+out/
+build/
+coverage/
+*.tsbuildinfo
+# Environment files and credentials. Keep the placeholder template versioned.
+.env
+.env.*
+!.env.example
+
+# Private keys, certificates, cloud state, and local credentials.
+*.pem
+*.key
+*.p12
+*.pfx
+.aws/
+.terraform/
+*.tfstate
+*.tfstate.*
+secrets/
+credentials/
+credentials.*
+npm-debug.log*
+.DS_Store
