@@ -1,12 +1,13 @@
 # Personal Lab
 
-A private, administrator-only workspace for IT projects, learning notes, and browser-based utilities. The repository was empty when implementation started, so this is a new Next.js App Router application.
+A private, single-administrator workspace for IT projects, learning notes, and browser-based utilities.
 
 ## Stack
 
-- Next.js 15 App Router, React 19, TypeScript, Tailwind CSS
-- Supabase Auth and PostgreSQL, with cookie-based server sessions and row-level security
-- Lucide icons
+- Next.js 16 App Router, React 19, TypeScript, and Tailwind CSS 4
+- Supabase Auth and PostgreSQL with cookie-based server sessions and row-level security (RLS)
+- Supabase packages: `@supabase/ssr` 0.6.x and `@supabase/supabase-js` 2.x
+- Builds use Webpack explicitly because Turbopack failed with `Operation not permitted` in this development environment.
 
 ## Local development
 
@@ -18,41 +19,78 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Visit [http://localhost:3000](http://localhost:3000). Configure Supabase as described below before private routes can be used. Without configuration, the app redirects to `/login` and clearly reports the missing setup; it never accepts a fake login.
+If `.env.local` already exists, update it locally without replacing its values. Never paste its contents into chat or commit it. The app checks the Supabase URL, key type, and administrator UUID format; this format check does not prove that the project is reachable.
 
-## Structure
+## Supabase setup
 
-- `src/app/(private)` — server-protected workspace pages
-- `src/app/actions.ts` — server actions for auth and data writes
-- `src/components` — navigation and interactive tools
-- `src/lib/supabase` — server-side Supabase clients and middleware session refresh
-- `src/lib/network.ts` — local IPv4 subnet calculation
-- `supabase/migrations` — schema, constraints, triggers, and RLS policies
+Select the section that matches the database's confirmed state. Do not infer the state from the migration files or migration-history table alone. In Supabase Authentication settings, keep public sign-ups disabled and use the existing administrator Auth account where one is already present.
 
-## Supabase setup and admin account
+### New database
 
-1. Create a Supabase project and copy its Project URL and publishable/anon key into `.env.local` as `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Set `ADMIN_USER_ID` to the UUID of the one administrator. Do not add a service-role key to this app.
-2. In Supabase Authentication settings, disable **Allow new users to sign up**. Create the administrator yourself in the Supabase Dashboard (or another trusted administrative process). No public registration route exists.
-3. Apply `supabase/migrations/202610110001_initial_schema.sql` in the Supabase SQL editor. Set the database setting in that SQL file's comment to the same admin UUID, e.g. `alter database postgres set app.admin_user_id = '...';`. Reconnect the app after changing the database setting.
-4. For production, configure the same three variables in the hosting provider's encrypted environment settings. Use HTTPS and update Supabase Auth's site URL and allowed redirect URLs for the chosen domain.
+1. Apply `supabase/migrations/202610110001_initial_schema.sql` in the Supabase SQL Editor.
+2. After it succeeds, apply `supabase/migrations/202610110002_harden_admin_rls.sql`.
+3. Add the existing administrator Auth UUID to the private allowlist using the SQL shown below.
 
-The middleware verifies the Supabase user server-side and checks the stable user UUID against `ADMIN_USER_ID`. Server actions repeat the check before writes. The database RLS policies independently require the authenticated UUID to match the database-side `app.admin_user_id` allowlist and the row's `user_id`. Never put a service-role key in this project. To verify anonymous isolation, run `select * from public.projects;` using an anonymous Supabase client (expect no rows / a permission error), then query with the administrator session; an authenticated non-admin should also see no rows and cannot write. Confirm SQL editor/service roles are not used for this test because they bypass RLS.
+### Legacy database using the old policy
+
+Use this path only after confirming that the database already has `public.projects` and `public.notes` and still uses the legacy `app.admin_user_id` policy from the original schema. Do not run migration 001 over that database. Apply migration 002, then add the existing administrator Auth UUID to `private.admin_users` using the SQL below. Migration 002 replaces the named legacy policies with the allowlist-based policies.
+
+### This project's database, already migrated manually
+
+The project owner reports that migrations 001 and 002 have already been run manually through Supabase SQL Editor, RLS and permissions have been checked, and the administrator is in the allowlist. **Do not rerun either migration or the allowlist insert for this database as part of a Vercel deployment.** Use read-only metadata checks and an application login/data-operation smoke test if verification is needed. The migration SQL creates schema objects and policies; it is not part of the Vercel build or deploy step.
+
+### Allowlist SQL for new or confirmed legacy databases
+
+Run this only after the migrations for that database have succeeded and the Auth user exists:
+
+   ```sql
+   insert into private.admin_users (user_id)
+   values ('YOUR_AUTH_USER_UUID');
+   ```
+
+Replace the placeholder with the Auth user's UUID. Keep the `private` schema out of the Data API's exposed schemas. For this project's already-configured database, the allowlist entry is already present and this insert should not be repeated.
+
+Set the same Auth UUID as `ADMIN_USER_ID` in `.env.local` for local development and in the hosting provider's encrypted environment settings for deployment. Set `NEXT_PUBLIC_SUPABASE_URL` to the Project URL and `NEXT_PUBLIC_SUPABASE_ANON_KEY` to the publishable key (or legacy anon key). Do not use a `sb_secret_` or `service_role` key in this app. Confirm that the environment's administrator UUID matches the allowlist without printing either value.
+
+If the environment UUID and database allowlist differ, application checks and RLS fail closed and data operations are denied.
+
+The migrations in this repository were applied to this project's database manually through SQL Editor. Manual SQL execution does not establish that Supabase CLI migration history is synchronized. Do not run `supabase db push` or `supabase migration repair` until the live schema and migration history have been compared with these files and a deliberate reconciliation plan has been reviewed.
 
 ### Environment variables
 
 | Name | Purpose |
 | --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Browser-safe publishable key (RLS remains mandatory) |
-| `ADMIN_USER_ID` | UUID allowlist for the single administrator |
+| `NEXT_PUBLIC_SUPABASE_URL` | HTTPS Supabase project URL (localhost HTTP is allowed for local development) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Browser-safe publishable key or legacy anon key; service-role/secret keys are rejected |
+| `ADMIN_USER_ID` | UUID allowlist used by the server-side application checks |
 
-`.env.local` and other local env files are ignored by Git. `.env.example` contains placeholders only.
+`.env.local`, other environment files, private keys, certificates, and common credential files are excluded by `.gitignore`. `.env.example` contains placeholder values only.
+
+## Authentication and database security
+
+- The Next.js Proxy and private route layout verify the Supabase session with `auth.getUser()` and allow only the exact `ADMIN_USER_ID`.
+- Every server action checks the session and administrator UUID again. Project and note inserts set `user_id` from the verified server-side Auth user; the form cannot choose it.
+- The database keeps the single admin UUID in `private.admin_users`, which is not granted to client roles. RLS calls a `SECURITY DEFINER` helper in the private schema. The helper uses an empty `search_path`, reads only whether the caller's `auth.uid()` is allowlisted, and is executable only by `authenticated` users.
+- Separate RLS policies protect `SELECT`, `INSERT`, `UPDATE`, and `DELETE` on both `projects` and `notes`. Each requires the allowlisted Auth user and `user_id = auth.uid()`. Anonymous table grants are revoked; ordinary authenticated users cannot read or write these rows, and even the administrator cannot assign rows to another UUID.
+- The application uses only a publishable/anon key and the user's cookie session. No service-role key is needed or supported.
+
+The current `projects` and `notes` foreign keys use `ON DELETE CASCADE`. Deleting the administrator from Supabase Auth therefore deletes that user's project and note rows as well; back up or migrate that data before deleting the Auth user.
+
+The SQL regression suite is in `supabase/tests/personal_lab_rls.test.sql`. It uses transaction-scoped fixtures and rolls them back. Run it against a **local** Supabase database with `supabase test db` after setting up the Supabase CLI/local project; it has not been run against a cloud database. Do not run the fixture test in the production SQL Editor.
+
+## Project structure
+
+- `src/app/(private)` — server-protected workspace pages
+- `src/app/actions.ts` — authentication and database write actions
+- `src/components` — navigation and interactive tools
+- `src/lib/supabase` — environment validation and server-side Supabase session clients, including Proxy session refresh
+- `src/lib/network.ts` — IPv4 subnet calculation
+- `supabase/migrations` — schema, allowlist, and RLS policies
+- `supabase/tests` — local database RLS tests
 
 ## Features
 
-Implemented: responsive dark workspace shell, authenticated login/logout flow, server-verified admin-only routes, dashboard counts/recent projects, project and note creation/deletion, note search, IPv4 subnet calculator including `/31` and `/32`, JSON formatter/validator, cloud documentation placeholders, and settings.
-
-Still needs setup or further work: Supabase project/database/admin configuration; dedicated project detail routes; additional dev utilities; automated browser viewport checks; production deployment and the final school domain. DNS lookup and AWS resource access are deliberately not implemented. Cloud Lab does not provision services. Dashboard counts are real database queries, not infrastructure monitoring.
+Implemented: responsive dark workspace shell, authenticated login/logout, admin-only routes, dashboard counts/recent projects, project and note CRUD, note search, IPv4 subnet calculator including `/31` and `/32`, JSON formatter/validator, and cloud documentation placeholders. DNS lookup and AWS resource access are not implemented. Cloud Lab does not provision services.
 
 ## Checks
 
@@ -63,15 +101,8 @@ npm test
 npm run build
 ```
 
-The subnet calculator test file covers a `/24`, `/31`, `/32`, and invalid input.
+`npm test` covers IPv4 subnet behavior and Supabase environment validation. The database RLS test requires a local Supabase database.
 
-## Deployment and domain
+## Deployment
 
-Deploy to a provider that supports the Next.js App Router and configure the environment variables there. Vercel Hobby can be considered for a personal project, but check its current usage limits and terms before relying on it. Add the school-provided domain only after it is assigned; configure DNS and HTTPS at the provider, then update Supabase Auth's site URL/redirect allowlist. The source has no hard-coded domain.
-
-## Troubleshooting
-
-- `/login?error=setup`: fill the three variables in `.env.local`, restart `npm run dev`.
-- Login returns an error: check that sign-in is enabled for the admin account and that `ADMIN_USER_ID` exactly matches the Auth user UUID.
-- Tables fail to load: apply the migration and database setting, then verify RLS and the project URL/key.
-- Auth redirects fail in production: add the HTTPS production URL and callback URLs to Supabase Auth settings.
+Deploy to a provider that supports the Next.js App Router and configure all three environment variables in its encrypted environment settings. Use HTTPS, keep public sign-up disabled, and configure Supabase Auth's Site URL and allowed redirect URLs for the deployment domain. The project owner reports that the current Supabase schema was already applied and verified manually; Vercel deployment and the production domain have not yet been verified.
