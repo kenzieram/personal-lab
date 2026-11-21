@@ -1,2 +1,14 @@
+import type { Metadata } from "next";
 import { NetworkCalculator } from "@/components/network-calculator";
-export default function NetworkPage(){return <><div className="mb-7"><p className="mb-2 text-xs font-medium text-violet-300">LABORATORY / NETWORKING</p><h1 className="font-display text-3xl font-semibold">Network lab</h1><p className="mt-2 text-sm text-zinc-500">Small tools for planning and understanding IP networks.</p></div><NetworkCalculator/><div className="mt-5 grid gap-4 sm:grid-cols-2">{["DNS lookup","IP address notes"].map(x=><div key={x} className="rounded-xl border border-dashed border-white/[.09] p-4"><div className="text-xs font-medium text-zinc-400">{x}</div><div className="mt-1 text-[11px] text-zinc-600">Coming soon</div></div>)}</div></>}
+import { PageHeading } from "@/components/page-heading";
+
+export const metadata: Metadata = { title: "Networking" };
+
+export default function NetworkPage() {
+  return (
+    <>
+      <PageHeading title="Networking" description="Calculate IPv4 network boundaries locally in your browser." />
+      <NetworkCalculator />
+    </>
+  );
+}

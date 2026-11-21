@@ -1,6 +1,86 @@
+import type { Metadata } from "next";
 import { createProject, deleteProject, updateProject } from "@/app/actions";
-import { createClient } from "@/lib/supabase/server";
-import { Boxes, Plus } from "lucide-react";
 import { ConfirmDelete } from "@/components/confirm-delete";
-const categories=["Web Development","Networking","Cloud Computing","Cybersecurity","Hardware & IoT","Other"],statuses=["Planning","In Progress","Paused","Completed"];
-export default async function ProjectsPage(){const db=await createClient();const {data:projects,error}=await db.from("projects").select("id,name,description,category,status,created_at,updated_at").order("updated_at",{ascending:false});return <><div className="mb-7"><p className="mb-2 text-xs font-medium text-violet-300">WORKSPACE / TRACKING</p><h1 className="font-display text-3xl font-semibold">Projects</h1><p className="mt-2 text-sm text-zinc-500">Keep your experiments organized and moving forward.</p></div><div className="grid gap-5 lg:grid-cols-[.8fr_1.2fr]"><form action={createProject} className="h-fit rounded-xl border border-white/[.07] bg-[#111216] p-5"><div className="flex items-center gap-2"><Plus size={16} className="text-violet-300"/><h2 className="text-sm font-semibold">New project</h2></div><label className="mt-5 block text-xs text-zinc-400">Project name<input name="name" required maxLength={100} className="focus-ring mt-2 h-10 w-full rounded-lg border border-white/[.09] bg-[#0c0d10] px-3 text-sm" placeholder="e.g. Home network monitor"/></label><label className="mt-4 block text-xs text-zinc-400">Description<textarea name="description" maxLength={2000} className="focus-ring mt-2 min-h-20 w-full rounded-lg border border-white/[.09] bg-[#0c0d10] p-3 text-sm" placeholder="What are you building or learning?"/></label><div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2"><label className="text-xs text-zinc-400">Category<select name="category" className="focus-ring mt-2 h-10 w-full rounded-lg border border-white/[.09] bg-[#0c0d10] px-2 text-xs">{categories.map(x=><option key={x}>{x}</option>)}</select></label><label className="text-xs text-zinc-400">Status<select name="status" className="focus-ring mt-2 h-10 w-full rounded-lg border border-white/[.09] bg-[#0c0d10] px-2 text-xs">{statuses.map(x=><option key={x}>{x}</option>)}</select></label></div><button className="focus-ring mt-5 h-10 w-full rounded-lg bg-violet-500 text-xs font-semibold hover:bg-violet-400">Create project</button></form><section className="rounded-xl border border-white/[.07] bg-[#111216]">{error?<p className="p-5 text-sm text-rose-300">Could not load projects. Apply the database migration and check connection settings.</p>:projects?.length?projects.map(p=><article key={p.id} className="flex items-start gap-3 border-b border-white/[.05] p-5 last:border-0"><div className="grid size-9 shrink-0 place-items-center rounded-lg bg-violet-500/[.09] text-violet-300"><Boxes size={16}/></div><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h3 className="text-sm font-medium">{p.name}</h3><span className="rounded-full border border-white/[.08] px-2 py-0.5 text-[10px] text-zinc-500">{p.status}</span></div><p className="mt-1 text-xs text-zinc-600">{p.category}</p>{p.description&&<p className="mt-3 whitespace-pre-wrap text-xs leading-5 text-zinc-400">{p.description}</p>}<p className="mt-3 text-[10px] text-zinc-700">Updated {new Date(p.updated_at).toLocaleDateString("en-GB")}</p><details className="mt-3"><summary className="focus-ring cursor-pointer text-[11px] text-violet-300">Edit project</summary><form action={updateProject} className="mt-3 space-y-3 rounded-lg border border-white/[.06] p-3"><input type="hidden" name="id" value={p.id}/><input name="name" defaultValue={p.name} required maxLength={100} aria-label="Project name" className="focus-ring h-9 w-full rounded-lg border border-white/[.08] bg-[#0c0d10] px-3 text-xs"/><textarea name="description" defaultValue={p.description} maxLength={2000} aria-label="Description" className="focus-ring min-h-16 w-full rounded-lg border border-white/[.08] bg-[#0c0d10] p-3 text-xs"/><div className="grid grid-cols-2 gap-2"><select name="category" defaultValue={p.category} aria-label="Category" className="focus-ring h-9 rounded-lg border border-white/[.08] bg-[#0c0d10] px-2 text-[10px]">{categories.map(x=><option key={x}>{x}</option>)}</select><select name="status" defaultValue={p.status} aria-label="Status" className="focus-ring h-9 rounded-lg border border-white/[.08] bg-[#0c0d10] px-2 text-[10px]">{statuses.map(x=><option key={x}>{x}</option>)}</select></div><button className="focus-ring h-9 rounded-lg bg-white/[.08] px-3 text-xs hover:bg-white/[.12]">Save changes</button></form></details></div><ConfirmDelete action={deleteProject} id={p.id} label={p.name}/></article>):<div className="grid min-h-64 place-items-center p-8 text-center"><div><div className="mx-auto grid size-10 place-items-center rounded-xl bg-white/[.04] text-zinc-500"><Boxes size={18}/></div><p className="mt-3 text-sm text-zinc-400">No projects yet</p><p className="mt-1 text-xs text-zinc-600">Your next experiment starts here.</p></div></div>}</section></div></>}
+import { PageHeading } from "@/components/page-heading";
+import { createClient } from "@/lib/supabase/server";
+
+export const metadata: Metadata = { title: "Projects" };
+
+const categories = ["Web Development", "Networking", "Cloud Computing", "Cybersecurity", "Hardware & IoT", "Other"];
+const statuses = ["Planning", "In Progress", "Paused", "Completed"];
+
+const inputClass = "field mt-2 min-h-11 px-3 text-sm";
+const labelClass = "block text-sm font-medium text-[var(--lab-secondary)]";
+
+export default async function ProjectsPage() {
+  const db = await createClient();
+  const { data: projects, error } = await db
+    .from("projects")
+    .select("id,name,description,category,status,created_at,updated_at")
+    .order("updated_at", { ascending: false });
+
+  return (
+    <>
+      <PageHeading title="Projects" description="Keep experiments and builds in one place.">
+        <a className="button-primary" href="#new-project">New project</a>
+      </PageHeading>
+
+      <div className="grid items-start gap-12 lg:grid-cols-[minmax(0,1.5fr)_minmax(280px,.8fr)]">
+        <section aria-labelledby="project-list-heading">
+          <h2 id="project-list-heading" className="section-title mb-4">Your projects</h2>
+          {error ? (
+            <p className="py-5 text-sm error-message" role="alert">Could not load projects. Check the database connection and access policies, then reload this page.</p>
+          ) : projects?.length ? (
+            <ul className="m-0 list-none divide-y divide-[var(--lab-border)] p-0">
+              {projects.map((project) => (
+                <li key={project.id} className="py-5 first:pt-2">
+                  <div className="flex items-start gap-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                        <h3 className="m-0 text-base font-medium">{project.name}</h3>
+                        <span className="text-sm text-[var(--lab-secondary)]">{project.status}</span>
+                      </div>
+                      <p className="mt-1 mb-0 text-sm muted">{project.category}</p>
+                      {project.description && <p className="mt-3 mb-0 whitespace-pre-wrap break-words text-sm leading-6 text-[var(--lab-secondary)]">{project.description}</p>}
+                      <p className="mt-3 mb-0 text-xs quiet">Updated {new Date(project.updated_at).toLocaleDateString("en-GB")}</p>
+                    </div>
+                    <ConfirmDelete action={deleteProject} id={project.id} label={project.name} />
+                  </div>
+                  <details className="mt-3">
+                    <summary className="inline-flex min-h-9 items-center text-sm font-medium text-[var(--lab-accent)]">Edit project</summary>
+                    <form action={updateProject} className="surface mt-3 space-y-4 p-4">
+                      <input type="hidden" name="id" value={project.id} />
+                      <label className={labelClass}>Project name<input name="name" defaultValue={project.name} required maxLength={100} className={inputClass} /></label>
+                      <label className={labelClass}>Description<textarea name="description" defaultValue={project.description} maxLength={2000} className="field mt-2 min-h-24 p-3 text-sm leading-6" /></label>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <label className={labelClass}>Category<select name="category" defaultValue={project.category} className={inputClass}>{categories.map((category) => <option key={category}>{category}</option>)}</select></label>
+                        <label className={labelClass}>Status<select name="status" defaultValue={project.status} className={inputClass}>{statuses.map((status) => <option key={status}>{status}</option>)}</select></label>
+                      </div>
+                      <button className="button-secondary" type="submit">Save changes</button>
+                    </form>
+                  </details>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="empty-state">
+              <p className="m-0 text-sm font-medium">No projects yet</p>
+              <p className="mt-2 mb-0 text-sm muted">Use the form to add the first project to your workspace.</p>
+            </div>
+          )}
+        </section>
+
+        <section id="new-project" className="surface scroll-mt-20 p-5 sm:p-6" aria-labelledby="new-project-heading">
+          <h2 id="new-project-heading" className="section-title">New project</h2>
+          <form action={createProject} className="mt-5 space-y-4">
+            <label className={labelClass}>Project name<input name="name" required maxLength={100} className={inputClass} placeholder="Home network monitor" /></label>
+            <label className={labelClass}>Description<textarea name="description" maxLength={2000} className="field mt-2 min-h-24 p-3 text-sm leading-6" placeholder="What are you building or learning?" /></label>
+            <label className={labelClass}>Category<select name="category" className={inputClass}>{categories.map((category) => <option key={category}>{category}</option>)}</select></label>
+            <label className={labelClass}>Status<select name="status" className={inputClass}>{statuses.map((status) => <option key={status}>{status}</option>)}</select></label>
+            <button className="button-primary w-full" type="submit">Create project</button>
+          </form>
+        </section>
+      </div>
+    </>
+  );
+}

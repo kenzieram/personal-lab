@@ -1,5 +1,36 @@
+import type { Metadata } from "next";
 import { signOut } from "@/app/actions";
+import { PageHeading } from "@/components/page-heading";
 import { isAppConfigured } from "@/lib/supabase/env";
-import { CheckCircle2, Info, LogOut } from "lucide-react";
+
 export const dynamic = "force-dynamic";
-export default function Settings(){const configured=isAppConfigured();return <><div className="mb-7"><p className="mb-2 text-xs font-medium text-violet-300">WORKSPACE / PREFERENCES</p><h1 className="font-display text-3xl font-semibold">Settings</h1><p className="mt-2 text-sm text-zinc-500">Application information and configuration status.</p></div><div className="max-w-2xl space-y-4"><section className="rounded-xl border border-white/[.07] bg-[#111216] p-5"><div className="flex items-center gap-2 text-sm font-semibold"><Info size={16} className="text-violet-300"/> Application</div><div className="mt-5 divide-y divide-white/[.05]">{[{k:"Name",v:"Personal Lab"},{k:"Version",v:"0.1.0"},{k:"Access",v:"Private administrator workspace"}].map(x=><div key={x.k} className="flex justify-between gap-3 py-3 text-xs"><span className="text-zinc-500">{x.k}</span><span className="text-zinc-300">{x.v}</span></div>)}</div></section><section className="rounded-xl border border-white/[.07] bg-[#111216] p-5"><div className="flex items-center gap-2 text-sm font-semibold"><CheckCircle2 size={16} className="text-violet-300"/> Service configuration</div><div className="mt-4 flex items-center justify-between rounded-lg border border-white/[.05] p-3"><div><div className="text-xs text-zinc-300">Supabase authentication and database</div><div className="mt-1 text-[10px] text-zinc-600">{configured?"Environment variables are present":"Configuration is incomplete"}</div></div><span className={`rounded-full px-2.5 py-1 text-[10px] ${configured?"bg-emerald-400/10 text-emerald-300":"bg-amber-300/10 text-amber-200"}`}>{configured?"Configured":"Needs setup"}</span></div><p className="mt-3 text-[10px] leading-5 text-zinc-600">This validates configuration format only; it does not confirm Supabase connectivity. No secret values are displayed here.</p></section><section className="rounded-xl border border-white/[.07] bg-[#111216] p-5"><div className="text-sm font-semibold">Administrator</div><p className="mt-2 text-xs text-zinc-500">Admin access is restricted to the configured Supabase user ID.</p><form action={signOut}><button className="focus-ring mt-5 flex h-10 items-center gap-2 rounded-lg border border-white/[.09] px-3 text-xs text-zinc-300 hover:bg-white/[.04]"><LogOut size={14}/> Sign out</button></form></section></div></>}
+export const metadata: Metadata = { title: "Settings" };
+
+export default function Settings() {
+  const configured = isAppConfigured();
+
+  return (
+    <>
+      <PageHeading title="Settings" />
+      <section className="max-w-2xl border-y border-[var(--lab-border)] py-5" aria-labelledby="connection-heading">
+        <h2 id="connection-heading" className="section-title">Supabase connection</h2>
+        <p className="mt-2 mb-0 text-sm muted">
+          {configured
+            ? "Required environment values are present. This does not verify database connectivity."
+            : "Configuration is incomplete. Check the required values in your deployment environment."}
+        </p>
+        <p className={`mt-4 mb-0 text-sm font-medium ${configured ? "success-message" : "error-message"}`} role="status">
+          {configured ? "Configuration present" : "Configuration incomplete"}
+        </p>
+      </section>
+
+      <section className="mt-10 max-w-2xl" aria-labelledby="account-heading">
+        <h2 id="account-heading" className="section-title">Account</h2>
+        <p className="mt-2 mb-4 text-sm muted">Sign out of this administrator session.</p>
+        <form action={signOut}>
+          <button className="button-secondary" type="submit">Sign out</button>
+        </form>
+      </section>
+    </>
+  );
+}

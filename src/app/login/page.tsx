@@ -1,4 +1,61 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { FlaskConical } from "lucide-react";
 import { signIn } from "@/app/actions";
 import { isAppConfigured } from "@/lib/supabase/env";
-import { LockKeyhole, FlaskConical, ArrowUpRight } from "lucide-react";
-export default async function Login({ searchParams }: { searchParams: Promise<{ error?: string }> }) { const { error } = await searchParams; const configured = isAppConfigured(); return <main className="min-h-screen bg-[#0c0d10] grid lg:grid-cols-[1.05fr_.95fr]"><section className="hidden lg:flex p-14 flex-col justify-between border-r border-white/[.07] bg-[#101115]"><a href="/login" className="flex items-center gap-3 font-display text-lg"><span className="grid size-10 place-items-center rounded-xl bg-violet-500/10 text-violet-300"><FlaskConical size={20}/></span>Personal Lab</a><div className="max-w-lg"><div className="mb-5 text-xs uppercase tracking-[.2em] text-violet-300">PRIVATE IT LABORATORY</div><h1 className="font-display text-5xl leading-[1.15] font-semibold">A quiet place to build, learn, and experiment.</h1><p className="mt-5 text-base leading-7 text-zinc-400">Your personal workspace for network labs, cloud notes, and the projects you are shaping.</p></div><div className="text-xs text-zinc-600">PERSONAL LAB · PRIVATE WORKSPACE</div></section><section className="flex min-h-screen items-center justify-center px-5 py-12"><div className="w-full max-w-[390px]"><div className="mb-10 flex items-center gap-3 lg:hidden"><span className="grid size-10 place-items-center rounded-xl bg-violet-500/10 text-violet-300"><FlaskConical size={20}/></span><span className="font-display text-lg">Personal Lab</span></div><div className="mb-8 grid size-12 place-items-center rounded-2xl border border-white/[.08] bg-white/[.03] text-violet-300"><LockKeyhole size={20}/></div><h2 className="font-display text-3xl font-semibold">Welcome back</h2><p className="mt-2 text-sm text-zinc-400">Sign in to your private workspace.</p>{error && <div role="alert" className="mt-5 rounded-xl border border-rose-400/20 bg-rose-400/[.07] p-3 text-sm text-rose-200">{error === "setup" ? "Supabase configuration is missing or invalid. Check the URL, publishable key, and administrator UUID described in the README." : error === "unauthorized" ? "This account is not authorized for this workspace." : "Sign-in failed. Check your email and password, then try again."}</div>}{!configured && <div className="mt-5 rounded-xl border border-amber-300/20 bg-amber-300/[.06] p-3 text-sm leading-6 text-amber-100/80">Supabase configuration is missing or invalid. Check the required values in <code>.env.local</code>; never use a service-role key here.</div>}<form action={signIn} className="mt-7 space-y-5"><label className="block text-sm font-medium text-zinc-300">Email<input name="email" type="email" autoComplete="username" required className="focus-ring mt-2 h-12 w-full rounded-xl border border-white/[.09] bg-[#111216] px-4 text-sm text-white placeholder:text-zinc-600" placeholder="admin@example.com"/></label><label className="block text-sm font-medium text-zinc-300">Password<input name="password" type="password" autoComplete="current-password" required className="focus-ring mt-2 h-12 w-full rounded-xl border border-white/[.09] bg-[#111216] px-4 text-sm text-white placeholder:text-zinc-600" placeholder="Your password"/></label><button disabled={!configured} className="focus-ring flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-violet-500 text-sm font-semibold text-white transition hover:bg-violet-400 disabled:cursor-not-allowed disabled:opacity-45">Sign in <ArrowUpRight size={16}/></button></form><p className="mt-6 text-center text-xs leading-5 text-zinc-600">Private access for the workspace administrator.<br/>Public account creation is disabled.</p></div></section></main>; }
+
+export const metadata: Metadata = { title: "Sign in" };
+
+const messages: Record<string, string> = {
+  setup: "Supabase configuration is missing or invalid. Check the URL, publishable key, and administrator UUID described in the README.",
+  unauthorized: "This account is not authorized for this workspace.",
+  credentials: "Sign-in failed. Check your email and password, then try again.",
+};
+
+export default async function Login({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+  const { error } = await searchParams;
+  const configured = isAppConfigured();
+
+  return (
+    <main id="main-content" className="grid min-h-screen lg:grid-cols-[1fr_1fr]">
+      <section className="hidden border-r border-[var(--lab-border)] bg-[var(--lab-surface)] p-12 lg:flex lg:flex-col lg:justify-between xl:p-16">
+        <Link href="/login" className="flex w-fit items-center gap-3 text-base font-semibold">
+          <span className="brand-mark" aria-hidden="true"><FlaskConical size={18} strokeWidth={1.8} /></span>
+          Personal Lab
+        </Link>
+        <div className="max-w-md">
+          <h1 className="text-4xl font-medium leading-tight tracking-[-.04em]">A private workspace for your technical work.</h1>
+          <p className="mt-5 max-w-sm text-base leading-7 muted">Projects, notes, and small tools for the things you build and study.</p>
+        </div>
+        <p className="mb-0 text-sm quiet">Administrator access only</p>
+      </section>
+
+      <section className="flex min-h-screen items-center justify-center px-5 py-12 sm:px-8">
+        <div className="w-full max-w-[400px]">
+          <Link href="/login" className="mb-12 flex w-fit items-center gap-3 text-base font-semibold lg:hidden">
+            <span className="brand-mark" aria-hidden="true"><FlaskConical size={18} strokeWidth={1.8} /></span>
+            Personal Lab
+          </Link>
+          <h2 className="text-3xl font-medium tracking-[-.035em]">Sign in</h2>
+          <p className="mt-2 mb-0 text-sm muted">Use the administrator account for this workspace.</p>
+
+          {error && <p role="alert" className="mt-6 border-l-2 border-[#c66e6e] bg-[#241719] p-3 text-sm leading-6 text-[#ffc1c1]">{messages[error] ?? messages.credentials}</p>}
+          {!configured && <p role="alert" className="mt-5 border-l-2 border-[#d6b975] bg-[#211e16] p-3 text-sm leading-6 text-[#ead7a3]">Supabase configuration is missing or invalid. Check the required values in <code>.env.local</code>. Do not use a service-role key.</p>}
+
+          <form action={signIn} className="mt-8 space-y-5">
+            <label className="block text-sm font-medium text-[var(--lab-secondary)]">
+              Email
+              <input name="email" type="email" autoComplete="username" required className="field mt-2 min-h-12 px-3 text-base" placeholder="email@example.com" />
+            </label>
+            <label className="block text-sm font-medium text-[var(--lab-secondary)]">
+              Password
+              <input name="password" type="password" autoComplete="current-password" required className="field mt-2 min-h-12 px-3 text-base" placeholder="Your password" />
+            </label>
+            <button disabled={!configured} className="button-primary min-h-12 w-full" type="submit">Sign in</button>
+          </form>
+          <p className="mt-6 mb-0 text-sm leading-6 quiet">Public account creation is disabled.</p>
+        </div>
+      </section>
+    </main>
+  );
+}

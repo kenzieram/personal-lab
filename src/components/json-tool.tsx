@@ -1,4 +1,70 @@
 "use client";
+
 import { useState } from "react";
-import { Braces, Check, Copy, RotateCcw } from "lucide-react";
-export function JsonTool(){const [value,setValue]=useState('{\n  "project": "personal-lab",\n  "private": true\n}'),[message,setMessage]=useState("");function format(){try{setValue(JSON.stringify(JSON.parse(value),null,2));setMessage("Valid JSON · formatted")}catch{setMessage("Invalid JSON · check syntax and try again")}}async function copy(){await navigator.clipboard.writeText(value);setMessage("Copied to clipboard")}return <div className="rounded-xl border border-white/[.07] bg-[#111216] p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-sm font-semibold">JSON formatter</h2><p className="mt-1 text-xs text-zinc-600">Validate and format JSON locally. Avoid pasting secrets.</p></div><div className="flex gap-2"><button onClick={()=>{setValue("");setMessage("")}} className="focus-ring flex h-9 items-center gap-2 rounded-lg border border-white/[.08] px-3 text-xs text-zinc-400 hover:text-white"><RotateCcw size={14}/> Clear</button><button onClick={copy} className="focus-ring flex h-9 items-center gap-2 rounded-lg border border-white/[.08] px-3 text-xs text-zinc-400 hover:text-white"><Copy size={14}/> Copy</button><button onClick={format} className="focus-ring flex h-9 items-center gap-2 rounded-lg bg-violet-500 px-3 text-xs font-semibold text-white hover:bg-violet-400"><Braces size={14}/> Format</button></div></div><textarea aria-label="JSON input" spellCheck={false} value={value} onChange={e=>setValue(e.target.value)} className="focus-ring mt-5 min-h-[300px] w-full resize-y rounded-lg border border-white/[.07] bg-[#0b0c0f] p-4 font-mono text-xs leading-6 text-zinc-300"/>{message&&<p role="status" className={`mt-3 flex items-center gap-2 text-xs ${message.startsWith("Invalid")?"text-rose-300":"text-emerald-300"}`}>{message.startsWith("Valid")&&<Check size={14}/ >}{message}</p>}</div>}
+
+export function JsonTool() {
+  const [value, setValue] = useState("");
+  const [message, setMessage] = useState("");
+  const [invalid, setInvalid] = useState(false);
+
+  function format() {
+    try {
+      setValue(JSON.stringify(JSON.parse(value), null, 2));
+      setMessage("JSON is valid and formatted.");
+      setInvalid(false);
+    } catch {
+      setMessage("JSON is invalid. Check the syntax and try again.");
+      setInvalid(true);
+    }
+  }
+
+  async function copy() {
+    if (!value) {
+      setMessage("There is no JSON to copy.");
+      setInvalid(false);
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(value);
+      setMessage("Copied to clipboard.");
+      setInvalid(false);
+    } catch {
+      setMessage("Clipboard access failed. Select and copy the text instead.");
+      setInvalid(true);
+    }
+  }
+
+  function clear() {
+    setValue("");
+    setMessage("");
+    setInvalid(false);
+  }
+
+  return (
+    <section aria-labelledby="json-heading">
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h2 id="json-heading" className="section-title">JSON formatter</h2>
+          <p className="mt-1 mb-0 text-sm muted">Formatting runs in this browser. Avoid pasting secrets.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={clear} className="button-secondary">Clear</button>
+          <button type="button" onClick={copy} className="button-secondary">Copy</button>
+          <button type="button" onClick={format} className="button-primary">Format JSON</button>
+        </div>
+      </div>
+      <label className="sr-only" htmlFor="json-input">JSON to format</label>
+      <textarea
+        id="json-input"
+        spellCheck={false}
+        value={value}
+        onChange={(event) => { setValue(event.target.value); setMessage(""); setInvalid(false); }}
+        aria-invalid={invalid}
+        aria-describedby={message ? "json-status" : undefined}
+        placeholder={'Paste JSON here, for example: { "enabled": true }'}
+        className="field mono min-h-[320px] resize-y p-4 text-sm leading-6"
+      />
+      {message && <p id="json-status" role={invalid ? "alert" : "status"} className={`mt-3 mb-0 text-sm ${invalid ? "error-message" : "success-message"}`}>{message}</p>}
+    </section>
+  );
+}

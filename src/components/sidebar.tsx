@@ -1,9 +1,203 @@
 "use client";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
-import { BookOpenText, Boxes, Cloud, Command, FlaskConical, LayoutDashboard, LogOut, Menu, Network, Settings, TerminalSquare, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import {
+  BookOpenText,
+  Boxes,
+  ChevronLeft,
+  ChevronRight,
+  Cloud,
+  FlaskConical,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Network,
+  Settings,
+  TerminalSquare,
+  X,
+} from "lucide-react";
 import { signOut } from "@/app/actions";
-const nav = [{ label:"Workspace", links:[{href:"/dashboard",name:"Overview",icon:LayoutDashboard},{href:"/projects",name:"Projects",icon:Boxes},{href:"/notes",name:"Knowledge base",icon:BookOpenText}]},{ label:"Laboratory", links:[{href:"/tools/network",name:"Network lab",icon:Network},{href:"/tools/cloud",name:"Cloud lab",icon:Cloud},{href:"/tools/dev",name:"Dev playground",icon:TerminalSquare}]},{label:"",links:[{href:"/settings",name:"Settings",icon:Settings}]}];
-function Contents({onNavigate}:{onNavigate?:()=>void}) { const path=usePathname(); return <><div className="flex h-[76px] items-center gap-3 px-6"><div className="grid size-9 place-items-center rounded-xl bg-violet-500/10 text-violet-300"><FlaskConical size={19}/></div><div><div className="font-display text-sm font-bold tracking-wide">Personal Lab</div><div className="mt-0.5 text-[10px] tracking-[.12em] text-zinc-600">PRIVATE WORKSPACE</div></div></div><nav className="flex-1 overflow-y-auto px-3 pt-5">{nav.map((group,i)=><div key={i} className="mb-6">{group.label&&<div className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[.16em] text-zinc-600">{group.label}</div>}{group.links.map(({href,name,icon:Icon})=>{const active=path===href||path.startsWith(href+"/");return <Link onClick={onNavigate} key={href} href={href} className={`focus-ring mb-1 flex h-10 items-center gap-3 rounded-lg px-3 text-[13px] transition ${active?"bg-white/[.07] text-white":"text-zinc-500 hover:bg-white/[.035] hover:text-zinc-200"}`}><Icon size={17} strokeWidth={1.8}/>{name}{active&&<span className="ml-auto h-4 w-0.5 rounded-full bg-violet-400"/>}</Link>})}</div>)}</nav><div className="border-t border-white/[.07] p-4"><div className="mb-4 flex items-center gap-3 px-1"><div className="grid size-8 place-items-center rounded-full bg-zinc-800 text-xs font-semibold text-zinc-300">A</div><div className="min-w-0"><div className="truncate text-xs font-medium text-zinc-300">Administrator</div><div className="text-[10px] text-zinc-600">Personal account</div></div></div><form action={signOut}><button className="focus-ring flex h-9 w-full items-center gap-3 rounded-lg px-2 text-xs text-zinc-500 hover:bg-white/[.04] hover:text-zinc-200"><LogOut size={15}/> Sign out</button></form><div className="mt-3 flex items-center gap-2 px-2 text-[10px] text-zinc-700"><Command size={12}/> Personal Lab <span className="ml-auto">v0.1</span></div></div></> }
-export function Sidebar(){const [open,setOpen]=useState(false);return <><aside className="fixed inset-y-0 left-0 z-30 hidden w-[248px] flex-col border-r border-white/[.07] bg-[#101115] md:flex"><Contents/></aside><header className="sticky top-0 z-20 flex h-14 items-center border-b border-white/[.07] bg-[#0c0d10]/95 px-4 backdrop-blur md:hidden"><button onClick={()=>setOpen(true)} aria-label="Open navigation" className="focus-ring grid size-10 place-items-center rounded-lg text-zinc-400"><Menu size={20}/></button><div className="ml-3 flex items-center gap-2 font-display text-sm font-semibold"><FlaskConical size={17} className="text-violet-300"/> Personal Lab</div></header>{open&&<div className="fixed inset-0 z-50 md:hidden"><button aria-label="Close navigation" onClick={()=>setOpen(false)} className="absolute inset-0 bg-black/65"/><aside className="absolute inset-y-0 left-0 flex w-[min(290px,85vw)] flex-col border-r border-white/[.08] bg-[#101115]"><div className="absolute right-3 top-5 z-10"><button aria-label="Close navigation" className="grid size-8 place-items-center text-zinc-500" onClick={()=>setOpen(false)}><X size={18}/></button></div><Contents onNavigate={()=>setOpen(false)}/></aside></div>}</>}
+
+const groups = [
+  {
+    label: "Workspace",
+    links: [
+      { href: "/dashboard", name: "Overview", icon: LayoutDashboard },
+      { href: "/projects", name: "Projects", icon: Boxes },
+      { href: "/notes", name: "Notes", icon: BookOpenText },
+    ],
+  },
+  {
+    label: "Tools",
+    links: [
+      { href: "/tools/network", name: "Networking", icon: Network },
+      { href: "/tools/cloud", name: "Cloud", icon: Cloud },
+      { href: "/tools/dev", name: "Development", icon: TerminalSquare },
+    ],
+  },
+  { label: "", links: [{ href: "/settings", name: "Settings", icon: Settings }] },
+];
+
+type SidebarProps = {
+  collapsed: boolean;
+  onCollapseChange: (collapsed: boolean) => void;
+};
+
+function Navigation({
+  collapsed,
+  onNavigate,
+}: {
+  collapsed: boolean;
+  onNavigate?: () => void;
+}) {
+  const pathname = usePathname();
+
+  return (
+    <>
+      <Link href="/dashboard" className={`brand${collapsed ? " is-compact" : ""}`} onClick={onNavigate}>
+        <span className="brand-mark" aria-hidden="true"><FlaskConical size={18} strokeWidth={1.8} /></span>
+        <span className="brand-name">Personal Lab</span>
+      </Link>
+
+      <nav className="side-nav" aria-label="Workspace">
+        {groups.map((group) => (
+          <div className="nav-group" key={group.label || "settings"}>
+            {group.label && <h2 className={`nav-group-label${collapsed ? " sr-only" : ""}`}>{group.label}</h2>}
+            {group.links.map(({ href, name, icon: Icon }) => {
+              const active = pathname === href || pathname.startsWith(`${href}/`);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={onNavigate}
+                  aria-current={active ? "page" : undefined}
+                  aria-label={collapsed ? name : undefined}
+                  title={collapsed ? name : undefined}
+                  className={`nav-link${active ? " is-active" : ""}${collapsed ? " is-collapsed" : ""}`}
+                >
+                  <Icon size={17} strokeWidth={1.8} aria-hidden="true" />
+                  <span className="nav-link-label">{name}</span>
+                </Link>
+              );
+            })}
+          </div>
+        ))}
+      </nav>
+
+      <div className="sidebar-footer">
+        <form action={signOut}>
+          <button className={`signout-button${collapsed ? " is-collapsed" : ""}`}>
+            <LogOut size={16} aria-hidden="true" />
+            <span className="nav-link-label">Sign out</span>
+          </button>
+        </form>
+      </div>
+    </>
+  );
+}
+
+export function Sidebar({ collapsed, onCollapseChange }: SidebarProps) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLElement>(null);
+  const wasMobileOpen = useRef(false);
+
+  useEffect(() => {
+    if (!mobileOpen) {
+      if (wasMobileOpen.current) triggerRef.current?.focus();
+      wasMobileOpen.current = false;
+      return;
+    }
+    wasMobileOpen.current = true;
+
+    const dialog = dialogRef.current;
+    const firstControl = dialog?.querySelector<HTMLElement>("button, a[href]");
+    firstControl?.focus();
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setMobileOpen(false);
+        return;
+      }
+
+      if (event.key !== "Tab" || !dialog) return;
+      const controls = Array.from(dialog.querySelectorAll<HTMLElement>("a[href], button:not([disabled])"));
+      const first = controls[0];
+      const last = controls.at(-1);
+      if (!first || !last) return;
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [mobileOpen]);
+
+  return (
+    <>
+      <aside className={`desktop-sidebar${collapsed ? " is-collapsed" : ""}`}>
+        <Navigation collapsed={collapsed} />
+        <button
+          type="button"
+          className="collapse-button"
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-expanded={!collapsed}
+          onClick={() => onCollapseChange(!collapsed)}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {collapsed ? <ChevronRight size={16} /> : <><ChevronLeft size={16} /><span>Collapse</span></>}
+        </button>
+      </aside>
+
+      <header className="mobile-header">
+        <button
+          ref={triggerRef}
+          type="button"
+          onClick={() => setMobileOpen(true)}
+          aria-label="Open navigation"
+          aria-haspopup="dialog"
+          aria-expanded={mobileOpen}
+          className="mobile-menu-button"
+        >
+          <Menu size={20} aria-hidden="true" />
+        </button>
+        <Link href="/dashboard" className="mobile-brand">
+          <span className="brand-mark" aria-hidden="true"><FlaskConical size={17} /></span>
+          Personal Lab
+        </Link>
+      </header>
+
+      {mobileOpen && (
+        <div className="mobile-nav-layer">
+          <button className="nav-backdrop" aria-label="Close navigation" onClick={() => setMobileOpen(false)} />
+          <aside
+            ref={dialogRef}
+            className="mobile-sidebar"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Workspace navigation"
+          >
+            <div className="mobile-sidebar-top">
+              <Navigation collapsed={false} onNavigate={() => setMobileOpen(false)} />
+              <button
+                type="button"
+                className="close-menu-button"
+                onClick={() => setMobileOpen(false)}
+                aria-label="Close navigation"
+              >
+                <X size={18} aria-hidden="true" />
+              </button>
+            </div>
+          </aside>
+        </div>
+      )}
+    </>
+  );
+}

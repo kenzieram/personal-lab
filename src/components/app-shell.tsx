@@ -1,2 +1,17 @@
+"use client";
+
+import { useState } from "react";
 import { Sidebar } from "@/components/sidebar";
-export function AppShell({children}:{children:React.ReactNode}) { return <div className="min-h-screen"><Sidebar/><main className="min-h-screen md:pl-[248px]"><div className="mx-auto max-w-[1320px] px-5 pb-12 pt-7 sm:px-7 md:pt-10 lg:px-10">{children}</div></main></div> }
+
+export function AppShell({ children }: { children: React.ReactNode }) {
+  const [collapsed, setCollapsed] = useState(false);
+
+  return (
+    <div className="app-shell">
+      <Sidebar collapsed={collapsed} onCollapseChange={setCollapsed} />
+      <main id="main-content" className={`app-main${collapsed ? " is-collapsed" : ""}`}>
+        <div className="page-container">{children}</div>
+      </main>
+    </div>
+  );
+}

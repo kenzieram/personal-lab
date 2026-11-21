@@ -1,3 +1,18 @@
-import { Cloud, Layers3, ListChecks } from "lucide-react";
-const cards=[{title:"AWS learning notes",desc:"Capture concepts, service comparisons, and links worth keeping.",icon:Cloud},{title:"Terraform experiments",desc:"Track modules, state notes, and infrastructure plans before deployment.",icon:Layers3},{title:"Deployment checklist",desc:"A repeatable checklist for preparing and shipping a project.",icon:ListChecks}];
-export default function CloudPage(){return <><div className="mb-7"><p className="mb-2 text-xs font-medium text-violet-300">LABORATORY / CLOUD</p><h1 className="font-display text-3xl font-semibold">Cloud lab</h1><p className="mt-2 text-sm text-zinc-500">A safe workspace for cloud learning and architecture notes.</p></div><div className="mb-5 flex gap-3 rounded-xl border border-amber-300/[.15] bg-amber-300/[.04] p-4 text-xs leading-5 text-amber-100/70"><Cloud className="mt-0.5 shrink-0 text-amber-200/60" size={16}/><p>No cloud account is connected. This area is for documentation only; it does not provision resources or store cloud credentials.</p></div><div className="grid gap-4 md:grid-cols-2">{cards.map(({title,desc,icon:Icon})=><article key={title} className="rounded-xl border border-white/[.07] bg-[#111216] p-5"><div className="grid size-9 place-items-center rounded-lg bg-violet-500/[.09] text-violet-300"><Icon size={17}/></div><h2 className="mt-4 text-sm font-semibold">{title}</h2><p className="mt-2 text-xs leading-5 text-zinc-500">{desc}</p><p className="mt-5 border-t border-white/[.05] pt-3 text-[10px] text-zinc-600">Documentation workspace · manual</p></article>)}</div><section className="mt-6 rounded-xl border border-white/[.07] bg-[#111216] p-5"><h2 className="text-sm font-semibold">Resource inventory</h2><p className="mt-2 text-xs text-zinc-600">No resources tracked yet. Add a note to the knowledge base when you want to record an architecture or experiment.</p></section></>}
+import type { Metadata } from "next";
+import Link from "next/link";
+import { PageHeading } from "@/components/page-heading";
+
+export const metadata: Metadata = { title: "Cloud" };
+
+export default function CloudPage() {
+  return (
+    <>
+      <PageHeading title="Cloud" description="Keep cloud learning notes alongside your other references." />
+      <section className="max-w-2xl border-y border-[var(--lab-border)] py-5" aria-labelledby="cloud-scope-heading">
+        <h2 id="cloud-scope-heading" className="section-title">Cloud account connections</h2>
+        <p className="mt-2 mb-0 text-sm leading-6 muted">No cloud account is connected. This page does not provision resources or store cloud credentials.</p>
+        <Link href="/notes" className="mt-4 inline-flex min-h-10 items-center text-sm font-medium text-[var(--lab-accent)] hover:underline">Open notes</Link>
+      </section>
+    </>
+  );
+}
