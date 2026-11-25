@@ -1,0 +1,236 @@
+/* Scoped exclusively under .portfolio-root so /login and private Personal Lab styles remain isolated. */
+
+html:has(.portfolio-root) {
+  background: #005292;
+  scroll-behavior: smooth;
+}
+
+.portfolio-root {
+  --pf-blue: #005292;
+  --pf-blue-deep: #003e70;
+  --pf-yellow: #ffc928;
+  --pf-yellow-hover: #ffd659;
+  --pf-paper: #f2f0e9;
+  --pf-paper-strong: #e4e0d3;
+  --pf-ink: #151a20;
+  --pf-ink-secondary: #525d6a;
+  --pf-white: #ffffff;
+  --pf-blue-tint: #d6e8f8;
+  --pf-term-bg: #101f32;
+  --pf-term-surface: #162941;
+  --pf-term-border: #284567;
+  --pf-term-prompt: #71b7f5;
+  --pf-term-green: #a6d9b0;
+  --pf-term-yellow: #f9e2af;
+  --pf-term-muted: #afc3d9;
+
+  min-height: 100vh;
+  background: var(--pf-blue);
+  color: var(--pf-white);
+  font-family: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  overflow-x: clip;
+}
+
+.portfolio-root ::selection {
+  background: var(--pf-yellow);
+  color: var(--pf-ink);
+}
+
+.portfolio-root :where(a[href], button:not(:disabled), summary, select) {
+  cursor: pointer;
+}
+
+.portfolio-root :where(a, button, input, summary, [tabindex]):not(#portfolio-terminal-input):focus-visible {
+  outline: 2px solid var(--pf-yellow);
+  outline-offset: 3px;
+}
+
+.portfolio-root [data-surface="paper"] :where(a, button, input, summary, [tabindex]):focus-visible,
+.portfolio-root [data-surface="yellow"] :where(a, button, input, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--pf-blue);
+  outline-offset: 3px;
+}
+
+/* Integrated prompt-line focus: pointer clicks stay clean, keyboard focus shows a subtle blue underline. */
+#portfolio-terminal-input {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+#portfolio-terminal-input:focus {
+  outline: none;
+}
+
+#portfolio-terminal-input:focus-visible {
+  outline: none;
+  box-shadow: inset 0 -1.5px 0 0 var(--pf-term-prompt);
+}
+
+.pf-container {
+  width: min(100%, 1240px);
+  margin: 0 auto;
+  padding-inline: clamp(20px, 4vw, 48px);
+}
+
+.pf-rule-yellow {
+  border-top: 1px solid rgb(255 201 40 / 78%);
+}
+
+.pf-rule-ink {
+  border-top: 1px solid rgb(21 26 32 / 18%);
+}
+
+.pf-link-underline {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  text-decoration: none;
+  transition: color 140ms ease, opacity 140ms ease;
+}
+
+.pf-link-underline::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 8px;
+  height: 2px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 180ms ease;
+}
+
+.pf-link-underline:hover::after,
+.pf-link-underline:focus-visible::after {
+  transform: scaleX(1);
+}
+
+.pf-btn-primary {
+  display: inline-flex;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 2px solid var(--pf-yellow);
+  border-radius: 2px;
+  background: var(--pf-yellow);
+  padding: 0 22px;
+  color: var(--pf-ink);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  transition: background-color 140ms ease, border-color 140ms ease, transform 140ms ease;
+}
+
+.pf-btn-primary:hover {
+  border-color: var(--pf-yellow-hover);
+  background: var(--pf-yellow-hover);
+}
+
+.pf-btn-primary:active {
+  transform: translateY(1px);
+}
+
+.pf-btn-blue {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 2px solid var(--pf-blue);
+  border-radius: 2px;
+  background: var(--pf-blue);
+  padding: 0 24px;
+  color: var(--pf-white);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  transition: background-color 140ms ease, border-color 140ms ease, transform 140ms ease;
+}
+
+.pf-btn-blue:hover {
+  border-color: var(--pf-blue-deep);
+  background: var(--pf-blue-deep);
+}
+
+.pf-btn-blue:active {
+  transform: translateY(1px);
+}
+
+.pf-btn-outline-light {
+  display: inline-flex;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1.5px solid rgb(255 255 255 / 55%);
+  border-radius: 2px;
+  background: transparent;
+  padding: 0 20px;
+  color: var(--pf-white);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  transition: border-color 140ms ease, background-color 140ms ease;
+}
+
+.pf-btn-outline-light:hover {
+  border-color: var(--pf-yellow);
+  background: rgb(255 201 40 / 10%);
+}
+
+.pf-btn-outline-dark {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1.5px solid rgb(21 26 32 / 35%);
+  border-radius: 2px;
+  background: transparent;
+  padding: 0 18px;
+  color: var(--pf-ink);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  transition: border-color 140ms ease, background-color 140ms ease;
+}
+
+.pf-btn-outline-dark:hover {
+  border-color: var(--pf-blue);
+  background: rgb(0 82 146 / 8%);
+}
+
+.pf-terminal-shell {
+  border: 1px solid var(--pf-term-border);
+  border-radius: 6px;
+  background: var(--pf-term-bg);
+  box-shadow: 0 18px 42px rgb(6 15 28 / 28%);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.pf-terminal-cursor {
+  display: inline-block;
+  width: 0.55em;
+  height: 1.15em;
+  vertical-align: text-bottom;
+  background: var(--pf-term-yellow);
+}
+
+.pf-terminal-cursor.is-blinking {
+  animation: pf-blink 1.05s steps(1, end) infinite;
+}
+
+@keyframes pf-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pf-terminal-cursor.is-blinking {
+    animation: none;
+    opacity: 1;
+  }
+}
